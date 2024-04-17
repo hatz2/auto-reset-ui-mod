@@ -9,7 +9,7 @@ void error(std::string msg) {
 }
 
 void auto_reset_ui_mod() {
-    constexpr int hook_size = 5;
+    constexpr int hook_size = 6;
     LPVOID allocated_mem = NULL;
     DWORD return_address = NULL;
     BYTE asm_code[] = {
@@ -21,17 +21,16 @@ void auto_reset_ui_mod() {
         0x9D,                           // popfd
         0x61,                           // popad
 
-        0x55,                           // push ebp
-        0x8B, 0xEC,                     // mov ebp, esp
-        0x51,                           // push ecx
-        0x53,                           // push ebx
+        0x6A, 0x10,                     // push 0x10
+        0X6A, 0x00,                     // push 0x00
+        0x6A, 0x00,                     // push 0x00
         0xE9, 0x00, 0x00, 0x00, 0x00    // jmp return_adress
     };
     
     // Get addresses for both the change resolution and reset ui functions
     DWORD change_resolution_address = pattern_scan(
-        "\x55\x8b\xec\x51\x53\x56\x57\x8b\xf9\x8b\xf2\x8b\xd8\xc6\x45\x00\x00\x8b\x45",
-        "xxxxxxxxxxxxxxx??xx"
+        "\x6a\x00\x6a\x00\x6a\x00\x6a\x00\x6a\x00\x6a\x00\x8b\xc3\xe8\x00\x00\x00\x00\x50\xe8\x00\x00\x00\x00\x6a",
+        "x?x?x?x?x?x?xxx????xx????x"
     );
 
     DWORD reset_ui_address = pattern_scan(
@@ -57,9 +56,9 @@ void auto_reset_ui_mod() {
 
     // Fill the missing relative addresses in the asm code
     DWORD reset_ui_relative_addr = reset_ui_address - (reinterpret_cast<DWORD>(allocated_mem) + 2) - 5;
-    DWORD return_relative_addr = return_address - (reinterpret_cast<DWORD>(allocated_mem) + 14) - 5;
+    DWORD return_relative_addr = return_address - (reinterpret_cast<DWORD>(allocated_mem) + 15) - 5;
     memcpy(&asm_code[3], &reset_ui_relative_addr, sizeof(DWORD));
-    memcpy(&asm_code[15], &return_relative_addr, sizeof(DWORD));
+    memcpy(&asm_code[16], &return_relative_addr, sizeof(DWORD));
 
     // Copy the asm code into the allocated memory
     memcpy(allocated_mem, &asm_code, sizeof(asm_code));
