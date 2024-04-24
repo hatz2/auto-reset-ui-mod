@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <string>
-#include <sstream>
+#include <thread>
 #include "pattern_scanner.h"
 #include "function_hook.h"
 
@@ -76,7 +76,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hModule);
-        auto_reset_ui_mod();
+        std::thread(auto_reset_ui_mod).detach();
         break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
